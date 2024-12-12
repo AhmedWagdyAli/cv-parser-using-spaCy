@@ -27,6 +27,11 @@ class CVProcessor:
             # Ensure the template exists
             if not os.path.isfile(template_path):
                 raise FileNotFoundError(f"Template not found at: {template_path}")
+            
+            if not output_path.lower().endswith('.docx'):
+                output_path += '.docx'
+                print (output_path) 
+
 
             doc = Document(template_path)
 
@@ -48,6 +53,7 @@ class CVProcessor:
                 if not skills_text or not isinstance(skills_text, str):
                     return "N/A"
                 skills_list = [skill.strip() for skill in skills_text.split(",")]
+                # TODO: insert into database here
                 return "\n".join(f"• {skill}" for skill in skills_list if skill)
 
             # Replace placeholders in paragraphs

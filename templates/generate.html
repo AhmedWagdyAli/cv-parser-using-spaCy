@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>generrate a CV</title>
+  </head>
+  <body>
+    <h1>Upload Your CV</h1>
+    <form method="POST" action="/generate_cv" enctype="multipart/form-data">
+      <label for="job_title">Job Title</label>
+      <input type="text" name="job_title" />
+      <label for="company">Company</label>
+      <input type="text" name="company" />
+      <label for="location">years_of_experience</label>
+      <input type="number" name="years_of_experience" />
+      <label for="location">skill</label>
+      <input type="text" name="skill" />
+      <button type="submit">generate</button>
+    </form>
+  </body>
+</html>

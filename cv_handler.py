@@ -10,6 +10,7 @@ class CVHandler:
     @staticmethod
     def extract_text(file_path):
         extension = os.path.splitext(file_path)[1].lower()
+        print(extension)
         if extension in [".jpg", ".jpeg", ".png"]:
             return CVHandler._extract_from_image(file_path)
         elif extension == ".pdf":
