@@ -24,10 +24,13 @@ from flask_migrate import Migrate
 from sqlalchemy import or_
 import zipfile
 from io import BytesIO
+from redis import Redis
+from rq import Queue
 
 app = Flask(__name__)
 
-
+redis_conn = Redis(host="localhost", port=6379)  # Connect to Redis
+queue = Queue(connection=redis_conn)
 app.config["UPLOAD_FOLDER"] = "./uploads"
 app.config["TEMPLATE_FOLDER"] = "./templates"  # For Word templates
 app.config["OUTPUT_FOLDER"] = "./output"  # For filled CVs
@@ -125,7 +128,7 @@ def get_cv_data():
             query = query.filter(Experiences.company.ilike(f"%{company}%"))
 
         if min_experience is not None:
-            query = query.filter(CV.years_of_experience == min_experience)
+            query = query.filter(CV.years_of_experience >= min_experience)
 
         if skill:
             print(skill)
@@ -158,6 +161,45 @@ def get_cv_data():
             download_name="matching_cvs.zip",
         )
 
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/upload_cvs", methods=["POST"])
+def upload_cvs():
+    if "files[]" not in request.files:
+        return jsonify({"error": "No files provided"}), 400
+
+    files = request.files.getlist("files[]")
+    if not files:
+        return jsonify({"error": "No files provided"}), 400
+
+    jobs = []
+    for file in files:
+        file_content = file.read()  # Get the binary content
+        file_name = file.filename
+        # Enqueue the parsing task
+        job = queue.enqueue(parse_cv, file_name, file_content)
+        jobs.append({"job_id": job.id, "filename": file_name})
+
+    return jsonify({"message": "Files uploaded successfully.", "jobs": jobs}), 200
+
+
+@app.route("/job_status/<job_id>", methods=["GET"])
+def job_status(job_id):
+    """
+    Check the status of a specific job.
+    """
+    from rq.job import Job
+
+    try:
+        job = Job.fetch(job_id, connection=redis_conn)
+        if job.is_finished:
+            return jsonify({"status": "completed", "result": job.result}), 200
+        elif job.is_failed:
+            return jsonify({"status": "failed"}), 500
+        else:
+            return jsonify({"status": "in progress"}), 202
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
