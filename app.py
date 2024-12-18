@@ -82,13 +82,16 @@ def upload_cv():
     service = CVService(db)
     parsed_data["path_of_cv"] = output_path
 
-    service.save_cv(parsed_data)
+    id = service.save_cv(parsed_data)
     # Check if the file was created
     if not os.path.exists(output_path):
         return "Error: Output file not found.", 500
 
     # Send the file
-    return send_file(output_path, as_attachment=True)
+    # return send_file(output_path, as_attachment=True)
+    cv_data = service.get_cv(id)
+    cv, skills, experiences = cv_data
+    return render_template("result.html", cv=cv, skills=skills, experiences=experiences)
 
 
 @app.route("/generate", methods=["GET"])

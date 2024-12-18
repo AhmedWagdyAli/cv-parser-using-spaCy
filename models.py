@@ -8,7 +8,8 @@ class CV(db.Model):
     job_title = db.Column(db.String(255), nullable=True)
     years_of_experience = db.Column(db.Integer, nullable=True)
     path_of_cv = db.Column(db.String(255), nullable=False)
-
+    phone = db.Column(db.String(255), nullable=True)
+    email = db.Column(db.String(255), nullable=True)
     certificates = db.relationship(
         "Certificates", backref="cv", cascade="all, delete-orphan", lazy="dynamic"
     )

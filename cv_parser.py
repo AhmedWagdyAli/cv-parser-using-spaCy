@@ -7,7 +7,7 @@ class CVParser:
     """Parses CV text to extract structured data."""
 
     def __init__(self):
-        self.nlp = spacy.load("en_core_web_sm")
+        self.nlp = spacy.load("en_core_web_md")
         self.languages_list = ["Arabic", "English", "French", "Spanish", "German"]
         self.skills_list = [
             "Python",
@@ -151,6 +151,7 @@ class CVParser:
             "languages": self.extract_languages(doc),
             "skills": self.extract_skills(doc),
             "experience": self.extract_experience(doc),
+            "contact": self.extract_contact(doc),
         }
         return data
 
@@ -357,7 +358,7 @@ class CVParser:
         return experience """
 
     def extract_experience(self, doc):
-        self.nlp = spacy.load("en_core_web_sm")
+        self.nlp = spacy.load("en_core_web_md")
         # Common roles across professions
 
         experience = []
@@ -423,3 +424,31 @@ class CVParser:
         if experiences and "role" in experiences[0]:
             return experiences[0]["role"]  # Return the first role found
         return "Position not found"
+
+    def extract_contacts(self, doc):
+        contacts = {"emails": set(), "phone_numbers": set()}
+
+        # Define regex patterns for emails and phone numbers
+        email_pattern = re.compile(r"[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+")
+        phone_pattern = re.compile(
+            r"\b(?:\+?(\d{1,3})[-.\s]?)?(\(?\d{2,4}\)?[-.\s]?)?\d{3}[-.\s]?\d{4,6}\b"
+        )
+
+        # Iterate through sentences in the document
+        for sent in doc.sents:
+            # Find emails
+            emails = email_pattern.findall(sent.text)
+            contacts["emails"].update(emails)
+
+            # Find phone numbers
+            phone_numbers = phone_pattern.findall(sent.text)
+            for match in phone_numbers:
+                # Flatten tuples and clean formatting
+                number = " ".join(filter(None, match)).replace("(", "").replace(")", "")
+                contacts["phone_numbers"].add(number)
+
+        # Convert sets to lists for easier processing
+        return {
+            "emails": list(contacts["emails"]),
+            "phone_numbers": list(contacts["phone_numbers"]),
+        }
